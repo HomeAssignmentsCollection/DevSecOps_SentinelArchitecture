@@ -1,0 +1,166 @@
+name: Terraform Apply (Main Branch)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'infrastructure/**'
+      - 'modules/**'
+
+env:
+  TF_VERSION: '1.6.0'
+  AWS_REGION: us-west-2
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  terraform-apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-duration-seconds: 3600
+          role-session-name: GitHubActions-${{ github.run_id }}
+
+      - name: Validate AWS credentials
+        run: |
+          # Test AWS credentials
+          echo "🔍 Validating AWS credentials..."
+          CALLER_IDENTITY=$(aws sts get-caller-identity 2>/dev/null || echo "")
+          if [ -z "$CALLER_IDENTITY" ]; then
+            echo "❌ AWS authentication failed"
+            exit 1
+          fi
+
+          echo "✅ AWS authentication successful"
+          echo "Account: $(echo $CALLER_IDENTITY | jq -r '.Account')"
+          echo "User: $(echo $CALLER_IDENTITY | jq -r '.Arn')"
+
+          # Validate required permissions for EKS operations
+          echo "🔍 Validating EKS permissions..."
+          aws iam simulate-principal-policy \
+            --policy-source-arn $(echo $CALLER_IDENTITY | jq -r '.Arn') \
+            --action-names eks:DescribeCluster \
+            --resource-arns "*" \
+            --query 'EvaluationResults[0].EvalDecision' \
+            --output text | grep -q "allowed" || {
+              echo "❌ Insufficient permissions for EKS operations"
+              exit 1
+            }
+
+          echo "✅ Required permissions validated"
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./infrastructure
+
+      - name: Backup Terraform State
+        id: backup
+        run: |
+          cd infrastructure
+
+          # Create backup with timestamp
+          BACKUP_KEY="backups/terraform.tfstate.$(date +%Y%m%d-%H%M%S)"
+
+          # Check if state exists in S3
+          if aws s3 ls s3://${{ secrets.TERRAFORM_STATE_BUCKET }}/sentinel/terraform.tfstate > /dev/null 2>&1; then
+            # Copy current state to backup location
+            aws s3 cp s3://${{ secrets.TERRAFORM_STATE_BUCKET }}/sentinel/terraform.tfstate \
+                      s3://${{ secrets.TERRAFORM_STATE_BUCKET }}/$BACKUP_KEY
+
+            echo "✅ State backed up to: $BACKUP_KEY"
+            echo "backup_key=$BACKUP_KEY" >> $GITHUB_OUTPUT
+          else
+            echo "ℹ️ No existing state found, skipping backup"
+            echo "backup_key=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+        working-directory: ./infrastructure
+
+      - name: Terraform Apply with Rollback
+        id: apply
+        run: |
+          cd infrastructure
+
+          # Apply with detailed logging
+          terraform apply -auto-approve tfplan 2>&1 | tee apply.log
+
+          # Check for errors
+          if [ ${PIPESTATUS[0]} -ne 0 ]; then
+            echo "❌ Terraform apply failed"
+
+            # Attempt to restore from backup if available
+            if [ -n "${{ steps.backup.outputs.backup_key }}" ]; then
+              echo "🔄 Attempting to restore from backup..."
+              aws s3 cp s3://${{ secrets.TERRAFORM_STATE_BUCKET }}/${{ steps.backup.outputs.backup_key }} \
+                        s3://${{ secrets.TERRAFORM_STATE_BUCKET }}/sentinel/terraform.tfstate
+              echo "⚠️ State restored from backup. Please review and re-run deployment."
+            fi
+
+            exit 1
+          fi
+
+          echo "✅ Terraform apply completed successfully"
+        working-directory: ./infrastructure
+        continue-on-error: true
+
+      - name: Validate Infrastructure
+        if: steps.apply.outcome == 'success'
+        run: |
+          cd infrastructure
+
+          # Validate all resources exist
+          terraform plan -detailed-exitcode
+
+          if [ $? -eq 2 ]; then
+            echo "❌ Infrastructure drift detected after apply"
+            exit 1
+          fi
+
+          echo "✅ Infrastructure validation successful"
+
+      - name: Capture Outputs
+        id: outputs
+        run: |
+          echo "gateway_cluster_name=$(terraform output -raw gateway_cluster_name)" >> $GITHUB_OUTPUT
+          echo "backend_cluster_name=$(terraform output -raw backend_cluster_name)" >> $GITHUB_OUTPUT
+          echo "gateway_alb_dns=$(terraform output -raw gateway_alb_dns)" >> $GITHUB_OUTPUT
+        working-directory: ./infrastructure
+
+      - name: Upload Terraform Outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-outputs
+          path: infrastructure/terraform.tfstate
+
+      - name: Notify Success
+        if: success()
+        run: |
+          echo "✅ Infrastructure deployment successful!"
+          echo "Gateway Cluster: ${{ steps.outputs.outputs.gateway_cluster_name }}"
+          echo "Backend Cluster: ${{ steps.outputs.outputs.backend_cluster_name }}"
+          echo "Gateway ALB: ${{ steps.outputs.outputs.gateway_alb_dns }}"
+
+      - name: Notify Failure
+        if: failure()
+        run: |
+          echo "❌ Infrastructure deployment failed!"
+          exit 1

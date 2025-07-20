@@ -1,0 +1,59 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: backend-network-policy
+  namespace: backend
+spec:
+  podSelector:
+    matchLabels:
+      app: backend-service
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Only allow traffic from gateway namespace
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: gateway
+      ports:
+        - protocol: TCP
+          port: 80
+    # Allow traffic from within the same namespace for health checks
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: backend
+      ports:
+        - protocol: TCP
+          port: 80
+    # Allow kubelet health checks from nodes
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+      ports:
+        - protocol: TCP
+          port: 80
+  egress:
+    # Allow DNS resolution to kube-system namespace
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Allow outbound HTTPS for image pulls and AWS API calls
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 443
+    # Allow outbound HTTP for health checks and updates
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 80
