@@ -2,10 +2,6 @@
 resource "aws_s3_bucket" "terraform_state" {
   bucket = "sentinel-terraform-state-bucket-${random_id.bucket_suffix.hex}"
 
-  lifecycle {
-    prevent_destroy = true
-  }
-
   tags = {
     Name        = "Sentinel Terraform State"
     Environment = var.environment
@@ -56,6 +52,12 @@ resource "aws_dynamodb_table" "terraform_locks" {
     Purpose     = "TerraformLocking"
   }
 }
+
+# NOTE: The prevent_destroy lifecycle rule is commented out to allow full resource cleanup
+# during the test assignment. In production, uncomment to protect critical state resources.
+# lifecycle {
+#   prevent_destroy = true
+# }
 
 # Random ID for unique bucket naming
 resource "random_id" "bucket_suffix" {

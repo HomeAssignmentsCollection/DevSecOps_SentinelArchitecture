@@ -43,10 +43,11 @@ provider "aws" {
   }
 }
 
-# Data sources for availability zones
-data "aws_availability_zones" "available" {
-  state = "available"
-}
+# NOTE: The following block is commented out due to IAM restrictions in the test environment.
+# In production, use dynamic availability zones for portability and fault tolerance.
+# data "aws_availability_zones" "available" {
+#   state = "available"
+# }
 
 # Gateway VPC
 module "vpc_gateway" {
@@ -54,7 +55,9 @@ module "vpc_gateway" {
 
   name               = "${var.project_name}-gateway"
   cidr_block         = var.gateway_vpc_cidr
-  availability_zones = slice(data.aws_availability_zones.available.names, 0, 2)
+  # NOTE: Hardcoded AZs for test assignment due to lack of ec2:DescribeAvailabilityZones permission.
+  # TODO: Restore dynamic AZ selection when proper IAM permissions are available.
+  availability_zones = ["us-east-2a", "us-east-2b"]
 
   tags = {
     Name = "${var.project_name}-gateway-vpc"
@@ -68,7 +71,9 @@ module "vpc_backend" {
 
   name               = "${var.project_name}-backend"
   cidr_block         = var.backend_vpc_cidr
-  availability_zones = slice(data.aws_availability_zones.available.names, 0, 2)
+  # NOTE: Hardcoded AZs for test assignment due to lack of ec2:DescribeAvailabilityZones permission.
+  # TODO: Restore dynamic AZ selection when proper IAM permissions are available.
+  availability_zones = ["us-east-2a", "us-east-2b"]
 
   tags = {
     Name = "${var.project_name}-backend-vpc"
