@@ -490,3 +490,8 @@ For issues and questions:
 ---
 
 **Built with ❤️ by the DevSecOps Team**
+
+## Author
+
+Copyright (c) 2025 Illia Rizvash  
+[LinkedIn](https://www.linkedin.com/in/illia-rizvash/)
