@@ -1,0 +1,80 @@
+name: Simulated Full Pipeline (Test Assignment)
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  simulate-pipeline:
+    name: Simulate All DevSecOps Steps
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Simulate Terraform Format Check
+        run: |
+          echo "[SIMULATION] Would run: terraform fmt -check -recursive"
+          echo "Explanation: This step checks Terraform code formatting. Skipped due to test assignment restrictions."
+
+      - name: Simulate Terraform Init
+        run: |
+          echo "[SIMULATION] Would run: terraform init in ./infrastructure"
+          echo "Explanation: This step initializes Terraform. Skipped due to test assignment restrictions."
+
+      - name: Simulate Terraform Validate
+        run: |
+          echo "[SIMULATION] Would run: terraform validate in ./infrastructure"
+          echo "Explanation: This step validates Terraform configuration. Skipped due to test assignment restrictions."
+
+      - name: Simulate Terraform Lint (tflint)
+        run: |
+          echo "[SIMULATION] Would run: tflint --init && tflint --recursive"
+          echo "Explanation: This step lints Terraform code. Skipped due to test assignment restrictions."
+
+      - name: Simulate Terraform Security Scan (Checkov)
+        run: |
+          echo "[SIMULATION] Would run: checkov on Terraform code"
+          echo "Explanation: This step scans Terraform for security issues. Skipped due to test assignment restrictions."
+
+      - name: Simulate Terraform Plan
+        run: |
+          echo "[SIMULATION] Would run: terraform plan -out=tfplan"
+          echo "Explanation: This step creates a Terraform plan. Skipped due to test assignment restrictions."
+
+      - name: Simulate Terraform Apply
+        run: |
+          echo "[SIMULATION] Would run: terraform apply tfplan"
+          echo "Explanation: This step applies infrastructure changes. Skipped due to test assignment restrictions."
+
+      - name: Simulate Kubernetes Manifest Validation
+        run: |
+          echo "[SIMULATION] Would run: kubectl apply --dry-run=client -f k8s-manifests/**/*.yaml"
+          echo "Explanation: This step validates Kubernetes manifests. Skipped due to test assignment restrictions."
+
+      - name: Simulate Backend Service Deployment
+        run: |
+          echo "[SIMULATION] Would run: kubectl apply -f k8s-manifests/backend/"
+          echo "Explanation: This step deploys the backend service. Skipped due to test assignment restrictions."
+
+      - name: Simulate Gateway Service Deployment
+        run: |
+          echo "[SIMULATION] Would run: kubectl apply -f k8s-manifests/gateway/"
+          echo "Explanation: This step deploys the gateway service. Skipped due to test assignment restrictions."
+
+      - name: Simulate Connectivity Test
+        run: |
+          echo "[SIMULATION] Would run: curl to ALB endpoint and kubectl get svc"
+          echo "Explanation: This step tests connectivity between gateway and backend. Skipped due to test assignment restrictions."
+
+      - name: Simulate Security Validation
+        run: |
+          echo "[SIMULATION] Would run: kubectl and network policy checks"
+          echo "Explanation: This step validates security controls. Skipped due to test assignment restrictions."
+
+      - name: Simulate Success Notification
+        run: |
+          echo "[SIMULATION] Pipeline completed successfully (all steps simulated)." 
