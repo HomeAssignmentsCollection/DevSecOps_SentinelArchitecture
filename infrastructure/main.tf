@@ -20,7 +20,7 @@ terraform {
     }
   }
 
-  # Backend configuration will be set up after initial deployment
+  # Конфигурация backend будет настроена после начального деплоя
   # backend "s3" {
   #   bucket         = "sentinel-terraform-state-bucket"
   #   key            = "sentinel/terraform.tfstate"
@@ -43,8 +43,8 @@ provider "aws" {
   }
 }
 
-# NOTE: The following block is commented out due to IAM restrictions in the test environment.
-# In production, use dynamic availability zones for portability and fault tolerance.
+# ПРИМЕЧАНИЕ: Следующий блок закомментирован из-за ограничений IAM в тестовой среде.
+# В продакшене используйте динамические availability zones для переносимости и отказоустойчивости.
 # data "aws_availability_zones" "available" {
 #   state = "available"
 # }
@@ -55,8 +55,8 @@ module "vpc_gateway" {
 
   name               = "${var.project_name}-gateway"
   cidr_block         = var.gateway_vpc_cidr
-  # NOTE: Hardcoded AZs for test assignment due to lack of ec2:DescribeAvailabilityZones permission.
-  # TODO: Restore dynamic AZ selection when proper IAM permissions are available.
+  # ПРИМЕЧАНИЕ: Жестко заданные AZ для тестового задания из-за отсутствия разрешения ec2:DescribeAvailabilityZones.
+  # TODO: Восстановить динамический выбор AZ когда будут доступны правильные IAM разрешения.
   availability_zones = ["us-east-2a", "us-east-2b"]
 
   tags = {
@@ -71,8 +71,8 @@ module "vpc_backend" {
 
   name               = "${var.project_name}-backend"
   cidr_block         = var.backend_vpc_cidr
-  # NOTE: Hardcoded AZs for test assignment due to lack of ec2:DescribeAvailabilityZones permission.
-  # TODO: Restore dynamic AZ selection when proper IAM permissions are available.
+  # ПРИМЕЧАНИЕ: Жестко заданные AZ для тестового задания из-за отсутствия разрешения ec2:DescribeAvailabilityZones.
+  # TODO: Восстановить динамический выбор AZ когда будут доступны правильные IAM разрешения.
   availability_zones = ["us-east-2a", "us-east-2b"]
 
   tags = {

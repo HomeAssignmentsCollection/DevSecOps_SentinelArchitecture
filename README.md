@@ -1,13 +1,13 @@
-# Sentinel DevSecOps Challenge: Split Architecture Implementation
+# Sentinel DevSecOps Challenge: Реализация Разделенной Архитектуры
 
 [![Terraform](https://img.shields.io/badge/Terraform-1.6+-623CE4?logo=terraform)](https://terraform.io)
 [![AWS](https://img.shields.io/badge/AWS-EKS-FF9900?logo=amazon-aws)](https://aws.amazon.com/eks/)
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-1.28+-326CE5?logo=kubernetes)](https://kubernetes.io)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-A production-ready proof-of-concept implementation of Rapyd Sentinel's split architecture using Infrastructure as Code (Terraform), Amazon EKS, and GitHub Actions CI/CD. This project demonstrates enterprise-grade security, modularity, and operational excellence.
+Готовая к продакшену реализация концепции разделенной архитектуры Rapyd Sentinel с использованием Infrastructure as Code (Terraform), Amazon EKS и GitHub Actions CI/CD. Этот проект демонстрирует корпоративную безопасность, модульность и операционное превосходство.
 
-## 🏗️ Architecture Overview
+## 🏗️ Обзор Архитектуры
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
@@ -50,19 +50,19 @@ A production-ready proof-of-concept implementation of Rapyd Sentinel's split arc
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Key Components
+### Ключевые Компоненты
 
-- **Gateway Layer (Public)**: Hosts internet-facing APIs and proxies in VPC `10.0.0.0/16`
-- **Backend Layer (Private)**: Runs internal processing and sensitive services in VPC `10.1.0.0/16`
-- **VPC Peering**: Secure private communication between isolated environments
-- **EKS Clusters**: Managed Kubernetes clusters with auto-scaling node groups
-- **Network Security**: Security groups, NACLs, and Kubernetes NetworkPolicies
+- **Gateway Layer (Публичный)**: Размещает интернет-ориентированные API и прокси в VPC `10.0.0.0/16`
+- **Backend Layer (Приватный)**: Запускает внутреннюю обработку и чувствительные сервисы в VPC `10.1.0.0/16`
+- **VPC Peering**: Безопасная приватная связь между изолированными средами
+- **EKS Clusters**: Управляемые Kubernetes кластеры с авто-масштабируемыми группами узлов
+- **Сетевая Безопасность**: Security groups, NACLs и Kubernetes NetworkPolicies
 
-## 🚀 Quick Start Guide
+## 🚀 Быстрый Старт
 
-### Prerequisites
+### Предварительные Требования
 
-Ensure you have the following tools installed:
+Убедитесь, что у вас установлены следующие инструменты:
 
 ```bash
 # AWS CLI v2
@@ -78,50 +78,50 @@ kubectl version --client
 git --version
 ```
 
-### Step 1: Clone and Setup
+### Шаг 1: Клонирование и Настройка
 
 ```bash
-# Clone the repository
+# Клонировать репозиторий
 git clone <repository-url>
 cd devsecops-technical-challenge
 
-# Configure AWS credentials
+# Настроить AWS credentials
 aws configure
-# or
+# или
 export AWS_ACCESS_KEY_ID="your-access-key"
 export AWS_SECRET_ACCESS_KEY="your-secret-key"
 export AWS_DEFAULT_REGION="us-west-2"
 ```
 
-### Step 2: Deploy Infrastructure
+### Шаг 2: Деплой Инфраструктуры
 
 ```bash
-# Setup Terraform backend (first time only)
+# Настройка Terraform backend (только первый раз)
 chmod +x scripts/setup-backend.sh
 ./scripts/setup-backend.sh
 
-# Deploy complete infrastructure
+# Деплой полной инфраструктуры
 chmod +x scripts/deploy.sh
 ./scripts/deploy.sh
 ```
 
-### Step 3: Verify Deployment
+### Шаг 3: Проверка Деплоя
 
 ```bash
-# Test connectivity and security
+# Тест связности и безопасности
 chmod +x scripts/test-connectivity.sh
 ./scripts/test-connectivity.sh
 ```
 
-### Step 4: Access Application
+### Шаг 4: Доступ к Приложению
 
-After deployment, access your application at the provided ALB DNS:
+После деплоя доступ к приложению по предоставленному ALB DNS:
 
-- **Main Gateway**: `http://<alb-dns>/`
+- **Основной Gateway**: `http://<alb-dns>/`
 - **Backend Proxy**: `http://<alb-dns>/api/`
 - **Health Check**: `http://<alb-dns>/health`
 
-## 📁 Repository Structure
+## 📁 Структура Репозитория
 
 ```
 ├── .github/workflows/          # GitHub Actions CI/CD pipelines
@@ -150,153 +150,153 @@ After deployment, access your application at the provided ALB DNS:
 └── docs/                   # Additional documentation
 ```
 
-## 🔒 Security Model
+## 🔒 Модель Безопасности
 
-### Network Security
+### Сетевая Безопасность
 
-#### VPC Isolation
+#### Изоляция VPC
 
-- **Gateway VPC**: `10.0.0.0/16` - Internet-facing services
-- **Backend VPC**: `10.1.0.0/16` - Internal services only
-- **No Direct Internet Access**: Backend VPC has no direct internet connectivity
+- **Gateway VPC**: `10.0.0.0/16` - Интернет-ориентированные сервисы
+- **Backend VPC**: `10.1.0.0/16` - Только внутренние сервисы
+- **Нет Прямого Доступа к Интернету**: Backend VPC не имеет прямого подключения к интернету
 
-#### Security Groups (Least Privilege)
+#### Security Groups (Принцип Минимальных Привилегий)
 
 **Gateway EKS Security Group**:
 
-- ✅ Inbound: HTTP/HTTPS from internet (0.0.0.0/0:80,443)
-- ✅ Inbound: All traffic from backend VPC (10.1.0.0/16)
-- ✅ Outbound: All traffic (for downloads, API calls)
+- ✅ Входящий: HTTP/HTTPS из интернета (0.0.0.0/0:80,443)
+- ✅ Входящий: Весь трафик из backend VPC (10.1.0.0/16)
+- ✅ Исходящий: Весь трафик (для загрузок, API вызовов)
 
 **Backend EKS Security Group**:
 
-- ✅ Inbound: All traffic from gateway VPC only (10.0.0.0/16)
-- ✅ Inbound: Internal VPC communication (10.1.0.0/16)
-- ❌ No direct internet inbound access
-- ✅ Outbound: All traffic (for downloads, updates)
+- ✅ Входящий: Весь трафик только из gateway VPC (10.0.0.0/16)
+- ✅ Входящий: Внутренняя связь VPC (10.1.0.0/16)
+- ❌ Нет прямого входящего доступа из интернета
+- ✅ Исходящий: Весь трафик (для загрузок, обновлений)
 
 #### Network Policies (Kubernetes)
 
 **Backend Network Policy**:
 
 ```yaml
-# Only allow ingress from gateway namespace
-# Deny all other cross-namespace communication
-# Allow DNS and outbound HTTPS
+# Разрешить только входящий трафик из gateway namespace
+# Запретить всю другую меж-namespace связь
+# Разрешить DNS и исходящий HTTPS
 ```
 
 **Gateway Network Policy**:
 
 ```yaml
-# Allow ingress from internet (via ALB)
-# Allow egress to backend VPC
-# Allow DNS and outbound HTTPS
+# Разрешить входящий трафик из интернета (через ALB)
+# Разрешить исходящий трафик к backend VPC
+# Разрешить DNS и исходящий HTTPS
 ```
 
-### IAM Security
+### IAM Безопасность
 
-- **EKS Cluster Roles**: Minimal permissions for cluster management
-- **Node Group Roles**: EC2, ECR, and CNI permissions only
-- **GitHub OIDC**: No long-lived access keys in CI/CD
-- **Principle of Least Privilege**: All roles follow minimal access patterns
+- **EKS Cluster Roles**: Минимальные разрешения для управления кластером
+- **Node Group Roles**: Только разрешения EC2, ECR и CNI
+- **GitHub OIDC**: Нет долгосрочных ключей доступа в CI/CD
+- **Принцип Минимальных Привилегий**: Все роли следуют паттернам минимального доступа
 
-## 🌐 Communication Flow
+## 🌐 Поток Связи
 
-### Request Path Analysis
+### Анализ Пути Запроса
 
 ```
-1. Internet Request → ALB (Gateway VPC)
+1. Интернет Запрос → ALB (Gateway VPC)
 2. ALB → Gateway Pod (Private Subnet)
 3. Gateway Pod → VPC Peering → Backend Pod
-4. Backend Pod → Response → Gateway Pod
-5. Gateway Pod → ALB → Internet
+4. Backend Pod → Ответ → Gateway Pod
+5. Gateway Pod → ALB → Интернет
 ```
 
-### Service Discovery
+### Обнаружение Сервисов
 
-- **Internal DNS**: `backend-service.backend.svc.cluster.local`
-- **Cross-Cluster Communication**: Via VPC peering and service endpoints
-- **Load Balancing**: Kubernetes services with multiple pod replicas
+- **Внутренний DNS**: `backend-service.backend.svc.cluster.local`
+- **Меж-кластерная Связь**: Через VPC peering и service endpoints
+- **Балансировка Нагрузки**: Kubernetes сервисы с множественными репликами подов
 
-### Error Handling
+### Обработка Ошибок
 
-- **Timeout Configuration**: 5s connect, 10s read/write
-- **Health Checks**: Liveness and readiness probes
+- **Конфигурация Таймаутов**: 5с подключение, 10с чтение/запись
+- **Health Checks**: Liveness и readiness пробы
 - **Graceful Degradation**: Nginx upstream failover
-- **Circuit Breaking**: Automatic retry with exponential backoff
+- **Circuit Breaking**: Автоматический retry с экспоненциальным backoff
 
-## 🔄 CI/CD Pipeline
+## 🔄 CI/CD Пайплайн
 
-### GitHub Actions Workflows
+### GitHub Actions Воркфлоу
 
-#### 1. Terraform Plan (PR Validation)
+#### 1. Terraform Plan (Валидация PR)
 
 ```yaml
-Triggers: Pull requests to main
-Steps:
+Триггеры: Pull requests в main
+Шаги:
   - Terraform format check
   - Terraform validate
   - TFLint static analysis
   - Checkov security scanning
-  - Terraform plan with artifact upload
-  - PR comment with plan results
+  - Terraform plan с загрузкой артефакта
+  - PR комментарий с результатами плана
 ```
 
 #### 2. Terraform Apply (Main Branch)
 
 ```yaml
-Triggers: Push to main branch
-Steps:
+Триггеры: Push в main branch
+Шаги:
   - Terraform init
   - Terraform plan
-  - Terraform apply with auto-approval
-  - Output capture and artifact storage
-  - Notification on success/failure
+  - Terraform apply с auto-approval
+  - Захват output и сохранение артефактов
+  - Уведомление об успехе/неудаче
 ```
 
 #### 3. Kubernetes Deployment
 
 ```yaml
-Triggers: Terraform completion or K8s manifest changes
-Steps:
-  - Manifest validation with kubectl
-  - Deploy to backend cluster first
-  - Deploy to gateway cluster second
-  - Connectivity testing
-  - Rollback capability
+Триггеры: Завершение Terraform или изменения K8s манифестов
+Шаги:
+  - Валидация манифестов с kubectl
+  - Деплой в backend кластер первым
+  - Деплой в gateway кластер вторым
+  - Тестирование связности
+  - Возможность отката
 ```
 
-### Security Practices
+### Практики Безопасности
 
-- **GitHub OIDC Federation**: No stored AWS credentials
-- **Branch Protection**: Require PR reviews for infrastructure changes
-- **Secret Management**: All sensitive values in GitHub Secrets
-- **Signed Commits**: Optional but recommended for audit trail
+- **GitHub OIDC Federation**: Нет сохраненных AWS credentials
+- **Branch Protection**: Требовать PR reviews для изменений инфраструктуры
+- **Secret Management**: Все чувствительные значения в GitHub Secrets
+- **Signed Commits**: Опционально, но рекомендуется для аудита
 
-### GitHub Actions Setup
+### Настройка GitHub Actions
 
-To enable automated deployments, you need to configure AWS OIDC authentication:
+Для включения автоматизированных деплоев нужно настроить AWS OIDC аутентификацию:
 
-1. **Quick Setup** (Recommended):
+1. **Быстрая Настройка** (Рекомендуется):
 
    ```bash
    chmod +x scripts/setup-github-actions.sh
    ./scripts/setup-github-actions.sh
    ```
 
-2. **Manual Setup**: Follow the detailed guide in [docs/GITHUB_ACTIONS_SETUP.md](docs/GITHUB_ACTIONS_SETUP.md)
+2. **Ручная Настройка**: Следуйте детальному руководству в [docs/GITHUB_ACTIONS_SETUP.md](docs/GITHUB_ACTIONS_SETUP.md)
 
-The setup script will:
+Скрипт настройки создаст:
 
-- Create AWS IAM OIDC provider
-- Create IAM role with necessary permissions
-- Provide the role ARN for GitHub secrets configuration
+- AWS IAM OIDC provider
+- IAM роль с необходимыми разрешениями
+- Предоставит ARN роли для конфигурации GitHub secrets
 
-## 💰 Cost Analysis
+## 💰 Анализ Стоимости
 
-### Monthly Cost Breakdown (us-west-2)
+### Месячная Разбивка Стоимости (us-west-2)
 
-| Component | Quantity | Unit Cost | Monthly Cost |
+| Компонент | Количество | Стоимость за Единицу | Месячная Стоимость |
 |-----------|----------|-----------|--------------|
 | **EKS Clusters** | 2 | $0.10/hour | $144.00 |
 | **EC2 Instances (t3.medium)** | 2-6 nodes | $0.0416/hour | $60.00-180.00 |
@@ -306,182 +306,182 @@ The setup script will:
 | **S3 (Terraform State)** | 1 bucket | $0.023/GB | $1.00 |
 | **DynamoDB (State Locking)** | 1 table | Pay-per-request | $1.00 |
 
-**Total Estimated Monthly Cost: $292.20 - $432.20**
+**Общая Оценка Месячной Стоимости: $292.20 - $432.20**
 
-### Cost Optimization Strategies
+### Стратегии Оптимизации Стоимости
 
-1. **Single NAT Gateway**: Reduces NAT costs by 50% (implemented)
-2. **Spot Instances**: Can reduce EC2 costs by 60-90%
-3. **Reserved Instances**: 1-year commitment saves 30-40%
-4. **Auto Scaling**: Scale down during off-hours
-5. **Cluster Autoscaler**: Automatic node scaling based on demand
+1. **Single NAT Gateway**: Снижает NAT затраты на 50% (реализовано)
+2. **Spot Instances**: Может снизить EC2 затраты на 60-90%
+3. **Reserved Instances**: 1-годовое обязательство экономит 30-40%
+4. **Auto Scaling**: Масштабирование вниз в нерабочие часы
+5. **Cluster Autoscaler**: Автоматическое масштабирование узлов на основе спроса
 
-### Scaling Considerations
+### Соображения Масштабирования
 
-- **Horizontal Pod Autoscaler**: Scale pods based on CPU/memory
-- **Vertical Pod Autoscaler**: Right-size pod resource requests
-- **Cluster Autoscaler**: Add/remove nodes automatically
-- **Multi-AZ**: High availability with automatic failover
+- **Horizontal Pod Autoscaler**: Масштабирование подов на основе CPU/памяти
+- **Vertical Pod Autoscaler**: Правильный размер запросов ресурсов подов
+- **Cluster Autoscaler**: Автоматическое добавление/удаление узлов
+- **Multi-AZ**: Высокая доступность с автоматическим failover
 
-## 🧪 Testing and Validation
+## 🧪 Тестирование и Валидация
 
-### Automated Tests
+### Автоматизированные Тесты
 
 ```bash
-# Infrastructure validation
+# Валидация инфраструктуры
 terraform validate
 terraform plan
 checkov -f infrastructure/
 
-# Connectivity testing
+# Тестирование связности
 ./scripts/test-connectivity.sh
 
-# Security validation
+# Валидация безопасности
 kubectl get networkpolicy --all-namespaces
 kubectl get svc --all-namespaces
 ```
 
-### Manual Verification
+### Ручная Проверка
 
-1. **Backend Isolation**: Verify backend service is not accessible from internet
-2. **Cross-VPC Communication**: Test gateway → backend connectivity
-3. **Load Balancer Health**: Check ALB target group health
-4. **DNS Resolution**: Verify service discovery across clusters
-5. **Security Groups**: Validate ingress/egress rules
+1. **Изоляция Backend**: Проверить, что backend сервис недоступен из интернета
+2. **Меж-VPC Связь**: Тестировать gateway → backend связность
+3. **Health Load Balancer**: Проверить health ALB target group
+4. **DNS Resolution**: Проверить service discovery между кластерами
+5. **Security Groups**: Валидировать ingress/egress правила
 
-### Security Testing
+### Тестирование Безопасности
 
 ```bash
-# Test backend accessibility (should fail)
-curl -f http://backend-service-direct-ip/ # Should timeout/fail
+# Тест доступности backend (должен провалиться)
+curl -f http://backend-service-direct-ip/ # Должен timeout/fail
 
-# Test gateway accessibility (should succeed)
-curl -f http://<alb-dns>/health # Should return "healthy"
+# Тест доступности gateway (должен успешно)
+curl -f http://<alb-dns>/health # Должен вернуть "healthy"
 
-# Test cross-VPC communication (should succeed)
-curl -f http://<alb-dns>/api/ # Should return backend response
+# Тест меж-VPC связи (должен успешно)
+curl -f http://<alb-dns>/api/ # Должен вернуть backend ответ
 ```
 
-## 🚨 Production Readiness Assessment
+## 🚨 Оценка Готовности к Продакшену
 
-### Current Implementation ✅
+### Текущая Реализация ✅
 
-- ✅ Infrastructure as Code with Terraform
-- ✅ Multi-AZ deployment for high availability
-- ✅ VPC isolation with secure peering
-- ✅ EKS clusters with managed node groups
-- ✅ Security groups with least privilege
-- ✅ Network policies for pod-level security
-- ✅ CI/CD pipeline with automated validation
-- ✅ Comprehensive documentation
+- ✅ Infrastructure as Code с Terraform
+- ✅ Multi-AZ деплой для высокой доступности
+- ✅ Изоляция VPC с безопасным peering
+- ✅ EKS кластеры с управляемыми группами узлов
+- ✅ Security groups с минимальными привилегиями
+- ✅ Network policies для безопасности на уровне подов
+- ✅ CI/CD пайплайн с автоматизированной валидацией
+- ✅ Комплексная документация
 
-### Missing for Production 🔄
+### Отсутствующее для Продакшена 🔄
 
 #### Observability Stack
 
-- **Monitoring**: Prometheus + Grafana
-- **Logging**: ELK Stack or CloudWatch Logs
-- **Tracing**: Jaeger or AWS X-Ray
-- **Alerting**: PagerDuty or Slack integration
+- **Мониторинг**: Prometheus + Grafana
+- **Логирование**: ELK Stack или CloudWatch Logs
+- **Трейсинг**: Jaeger или AWS X-Ray
+- **Алертинг**: PagerDuty или Slack интеграция
 
-#### Security Hardening
+#### Усиление Безопасности
 
-- **TLS/mTLS**: End-to-end encryption
-- **Pod Security Standards**: Enforce security contexts
-- **Image Scanning**: Trivy or Clair integration
-- **Secrets Management**: AWS Secrets Manager or Vault
+- **TLS/mTLS**: Сквозное шифрование
+- **Pod Security Standards**: Принудительные security contexts
+- **Сканирование Образов**: Trivy или Clair интеграция
+- **Управление Секретами**: AWS Secrets Manager или Vault
 
-#### Operational Excellence
+#### Операционное Превосходство
 
-- **Backup Strategy**: EBS snapshots, ETCD backups
-- **Disaster Recovery**: Multi-region deployment
-- **GitOps**: ArgoCD or Flux for application deployment
-- **Service Mesh**: Istio or AWS App Mesh
+- **Стратегия Резервного Копирования**: EBS snapshots, ETCD backups
+- **Disaster Recovery**: Multi-region деплой
+- **GitOps**: ArgoCD или Flux для деплоя приложений
+- **Service Mesh**: Istio или AWS App Mesh
 
-#### Compliance & Governance
+#### Соответствие и Управление
 
 - **Policy as Code**: Open Policy Agent (OPA)
-- **Compliance Scanning**: AWS Config Rules
-- **Audit Logging**: CloudTrail integration
-- **Resource Tagging**: Comprehensive tagging strategy
+- **Сканирование Соответствия**: AWS Config Rules
+- **Аудит Логирование**: CloudTrail интеграция
+- **Тегирование Ресурсов**: Комплексная стратегия тегирования
 
-## 🛣️ Next Steps & Roadmap
+## 🛣️ Следующие Шаги и Roadmap
 
-### Phase 1: Security Enhancement (Week 1-2)
+### Фаза 1: Усиление Безопасности (Неделя 1-2)
 
-- [ ] Implement TLS termination at ALB
-- [ ] Add mTLS between services
-- [ ] Integrate AWS Secrets Manager
-- [ ] Enable Pod Security Standards
+- [ ] Реализовать TLS termination на ALB
+- [ ] Добавить mTLS между сервисами
+- [ ] Интегрировать AWS Secrets Manager
+- [ ] Включить Pod Security Standards
 
-### Phase 2: Observability (Week 3-4)
+### Фаза 2: Observability (Неделя 3-4)
 
-- [ ] Deploy Prometheus monitoring stack
-- [ ] Configure Grafana dashboards
-- [ ] Implement centralized logging
-- [ ] Set up distributed tracing
+- [ ] Деплой Prometheus monitoring stack
+- [ ] Настройка Grafana дашбордов
+- [ ] Реализовать централизованное логирование
+- [ ] Настроить distributed tracing
 
-### Phase 3: GitOps & Automation (Week 5-6)
+### Фаза 3: GitOps и Автоматизация (Неделя 5-6)
 
-- [ ] Implement ArgoCD for application deployment
-- [ ] Add automated security scanning
-- [ ] Configure policy enforcement with OPA
-- [ ] Implement blue-green deployments
+- [ ] Реализовать ArgoCD для деплоя приложений
+- [ ] Добавить автоматизированное сканирование безопасности
+- [ ] Настроить принудительную политику с OPA
+- [ ] Реализовать blue-green деплои
 
-### Phase 4: Multi-Environment (Week 7-8)
+### Фаза 4: Мульти-Окружение (Неделя 7-8)
 
-- [ ] Create staging environment
-- [ ] Implement environment promotion pipeline
-- [ ] Add integration testing
-- [ ] Configure disaster recovery
+- [ ] Создать staging окружение
+- [ ] Реализовать pipeline продвижения окружений
+- [ ] Добавить интеграционное тестирование
+- [ ] Настроить disaster recovery
 
-## 🤝 Contributing
+## 🤝 Вклад в Проект
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+1. Форкните репозиторий
+2. Создайте feature branch (`git checkout -b feature/amazing-feature`)
+3. Зафиксируйте ваши изменения (`git commit -m 'Add amazing feature'`)
+4. Отправьте в ветку (`git push origin feature/amazing-feature`)
+5. Откройте Pull Request
 
-## 📄 License
+## 📄 Лицензия
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Этот проект лицензирован под MIT License - см. файл [LICENSE](LICENSE) для деталей.
 
-## 🆘 Troubleshooting
+## 🆘 Устранение Проблем
 
-### Common Issues
+### Частые Проблемы
 
-**Issue**: Terraform backend initialization fails
+**Проблема**: Сбой инициализации Terraform backend
 
 ```bash
-# Solution: Run backend setup script first
+# Решение: Сначала запустите скрипт настройки backend
 ./scripts/setup-backend.sh
 ```
 
-**Issue**: EKS cluster creation timeout
+**Проблема**: Таймаут создания EKS кластера
 
 ```bash
-# Solution: Check AWS service limits and IAM permissions
+# Решение: Проверьте лимиты AWS сервисов и IAM разрешения
 aws eks describe-cluster --name sentinel-gateway
 ```
 
-**Issue**: LoadBalancer not getting external IP
+**Проблема**: LoadBalancer не получает внешний IP
 
 ```bash
-# Solution: Check security groups and subnet tags
+# Решение: Проверьте security groups и subnet теги
 kubectl describe svc gateway-service -n gateway
 ```
 
-**Issue**: Cross-VPC communication fails
+**Проблема**: Сбой меж-VPC связи
 
 ```bash
-# Solution: Verify VPC peering and route tables
+# Решение: Проверьте VPC peering и route tables
 aws ec2 describe-vpc-peering-connections
 ```
 
-### Support
+### Поддержка
 
-For issues and questions:
+Для проблем и вопросов:
 
 - 📧 Email: [your-email@company.com]
 - 💬 Slack: #devsecops-sentinel
@@ -489,7 +489,7 @@ For issues and questions:
 
 ---
 
-**Built with ❤️ by the DevSecOps Team**
+**Создано с ❤️ командой DevSecOps**
 
 ## Author
 

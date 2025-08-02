@@ -1,4 +1,4 @@
-# S3 bucket for Terraform state
+# S3 bucket для Terraform state
 resource "aws_s3_bucket" "terraform_state" {
   bucket = "sentinel-terraform-state-bucket-${random_id.bucket_suffix.hex}"
 
@@ -35,7 +35,7 @@ resource "aws_s3_bucket_public_access_block" "terraform_state" {
   restrict_public_buckets = true
 }
 
-# DynamoDB table for state locking
+# DynamoDB таблица для блокировки state
 resource "aws_dynamodb_table" "terraform_locks" {
   name         = "sentinel-terraform-locks"
   billing_mode = "PAY_PER_REQUEST"
@@ -53,13 +53,13 @@ resource "aws_dynamodb_table" "terraform_locks" {
   }
 }
 
-# NOTE: The prevent_destroy lifecycle rule is commented out to allow full resource cleanup
-# during the test assignment. In production, uncomment to protect critical state resources.
+# ПРИМЕЧАНИЕ: Правило prevent_destroy закомментировано для полной очистки ресурсов
+# во время тестового задания. В продакшене раскомментируйте для защиты критических state ресурсов.
 # lifecycle {
 #   prevent_destroy = true
 # }
 
-# Random ID for unique bucket naming
+# Случайный ID для уникального именования bucket
 resource "random_id" "bucket_suffix" {
   byte_length = 4
 }

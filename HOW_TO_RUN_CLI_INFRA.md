@@ -1,98 +1,98 @@
-# How to Run Infrastructure Checks with CLI Scripts
+# Как Запустить Проверки Инфраструктуры с CLI Скриптами
 
-## Why Use CLI Scripts?
-Due to IAM restrictions for the test assignment user, it is not possible to run full Terraform apply/destroy workflows (for example, due to lack of permissions for ec2:DescribeAvailabilityZones and prevent_destroy). To demonstrate infrastructure provisioning and teardown, we provide bash scripts that use AWS CLI to create and delete all core resources.
+## Почему Использовать CLI Скрипты?
+Из-за ограничений IAM для пользователя тестового задания, невозможно запустить полные Terraform apply/destroy воркфлоу (например, из-за отсутствия разрешений для ec2:DescribeAvailabilityZones и prevent_destroy). Для демонстрации создания и удаления инфраструктуры мы предоставляем bash скрипты, которые используют AWS CLI для создания и удаления всех основных ресурсов.
 
-## Prerequisites
-- AWS CLI installed and configured (or export AWS credentials as environment variables)
-- Sufficient permissions to create and delete VPC, Subnet, IGW, Route Table, Security Group in the target AWS account
+## Предварительные Требования
+- AWS CLI установлен и настроен (или экспортируйте AWS credentials как переменные окружения)
+- Достаточные разрешения для создания и удаления VPC, Subnet, IGW, Route Table, Security Group в целевом AWS аккаунте
 - Bash shell
 
-## Step-by-Step Instructions
+## Пошаговые Инструкции
 
-### 1. Export AWS Credentials
-Export your AWS credentials and region (replace with your actual keys):
+### 1. Экспорт AWS Credentials
+Экспортируйте ваши AWS credentials и регион (замените на ваши реальные ключи):
 ```bash
 export AWS_ACCESS_KEY_ID=YOUR_ACCESS_KEY_ID
 export AWS_SECRET_ACCESS_KEY=YOUR_SECRET_ACCESS_KEY
 export AWS_DEFAULT_REGION=us-east-2
 ```
 
-### 2. Deploy Infrastructure
-Run the deploy script to create all core resources:
+### 2. Деплой Инфраструктуры
+Запустите скрипт деплоя для создания всех основных ресурсов:
 ```bash
 bash scripts/deploy-infra-cli.sh
 ```
-You will see output for each step: VPC, subnets, IGW, route table, security group, and their IDs.
+Вы увидите вывод для каждого шага: VPC, subnets, IGW, route table, security group и их ID.
 
-### 3. Teardown Infrastructure
-After testing, run the teardown script to clean up all resources:
+### 3. Удаление Инфраструктуры
+После тестирования запустите скрипт удаления для очистки всех ресурсов:
 ```bash
 bash scripts/teardown-infra-cli.sh
 ```
-The script will delete all resources in the correct order, handling dependencies automatically.
+Скрипт удалит все ресурсы в правильном порядке, автоматически обрабатывая зависимости.
 
-## Resource Creation/Deletion Sequence
-1. **VPC** is created first.
-2. **Subnets** (A and B) are created in different AZs within the VPC.
-3. **Internet Gateway (IGW)** is created and attached to the VPC.
-4. **Route Table** is created and associated with the subnets; a default route to IGW is added.
-5. **Security Group** is created and configured for SSH, HTTP, and HTTPS access.
-6. **Teardown** script deletes resources in reverse order, ensuring all dependencies are handled (subnets, route table associations, IGW, VPC, etc.).
+## Последовательность Создания/Удаления Ресурсов
+1. **VPC** создается первым.
+2. **Subnets** (A и B) создаются в разных AZ внутри VPC.
+3. **Internet Gateway (IGW)** создается и прикрепляется к VPC.
+4. **Route Table** создается и связывается с subnets; добавляется маршрут по умолчанию к IGW.
+5. **Security Group** создается и настраивается для SSH, HTTP и HTTPS доступа.
+6. **Teardown** скрипт удаляет ресурсы в обратном порядке, обеспечивая обработку всех зависимостей (subnets, route table associations, IGW, VPC, и т.д.).
 
-## Notes
-- These scripts are for demonstration and validation in the test environment only.
-- In production, use Terraform for full infrastructure as code, dynamic AZ selection, and state management.
-- The CLI scripts are idempotent and safe to run multiple times, but always check AWS Console for orphaned resources after testing.
+## Примечания
+- Эти скрипты только для демонстрации и валидации в тестовой среде.
+- В продакшене используйте Terraform для полного infrastructure as code, динамического выбора AZ и управления состоянием.
+- CLI скрипты идемпотентны и безопасны для многократного запуска, но всегда проверяйте AWS Console на наличие "осиротевших" ресурсов после тестирования.
 
-## Why Not Use Terraform Directly?
-Due to explicit deny policies on the test user, some Terraform operations (like dynamic AZ discovery and resource protection) are not possible. The CLI scripts provide a way to demonstrate and validate infrastructure provisioning logic under these constraints. 
+## Почему Не Использовать Terraform Напрямую?
+Из-за явных deny политик на тестовом пользователе, некоторые операции Terraform (как динамическое обнаружение AZ и защита ресурсов) невозможны. CLI скрипты предоставляют способ демонстрации и валидации логики создания инфраструктуры при этих ограничениях. 
 
-## Static Code Analysis Steps
+## Шаги Статического Анализа Кода
 
-To ensure code quality and security, the following static analysis steps were performed:
+Для обеспечения качества и безопасности кода были выполнены следующие шаги статического анализа:
 
 ### Terraform
-- **Format Check:**
+- **Проверка Форматирования:**
   ```bash
   terraform fmt -check
   ```
-  Checks that all Terraform files are properly formatted.
+  Проверяет, что все Terraform файлы правильно отформатированы.
 
-- **Validation:**
+- **Валидация:**
   ```bash
   terraform validate
   ```
-  Validates the syntax and structure of Terraform configuration files.
+  Валидирует синтаксис и структуру Terraform конфигурационных файлов.
 
-- **Recommended (optional):**
-  - **tflint** — Lint Terraform code for best practices and errors.
-  - **tfsec** — Scan Terraform code for security issues.
-  - **checkov** — Additional security scanning for IaC.
+- **Рекомендуемые (опционально):**
+  - **tflint** — Линт Terraform кода для лучших практик и ошибок.
+  - **tfsec** — Сканирование Terraform кода на проблемы безопасности.
+  - **checkov** — Дополнительное сканирование безопасности для IaC.
 
-### Shell Scripts
+### Shell Скрипты
 - **ShellCheck:**
   ```bash
   shellcheck scripts/deploy-infra-cli.sh
   shellcheck scripts/teardown-infra-cli.sh
   ```
-  Checks shell scripts for errors, security issues, and best practices.
+  Проверяет shell скрипты на ошибки, проблемы безопасности и лучшие практики.
 
-- **Recommended (optional):**
-  - **shfmt** — Auto-format shell scripts.
-  - **bashate** — Lint bash scripts for style and errors.
+- **Рекомендуемые (опционально):**
+  - **shfmt** — Авто-форматирование shell скриптов.
+  - **bashate** — Линт bash скриптов на стиль и ошибки.
 
-### Kubernetes Manifests
-- **Validation (already in pipeline):**
+### Kubernetes Манифесты
+- **Валидация (уже в пайплайне):**
   ```bash
   kubectl apply --dry-run=client -f k8s-manifests/backend/
   kubectl apply --dry-run=client -f k8s-manifests/gateway/
   ```
-  Validates Kubernetes manifests for syntax and structure.
+  Валидирует Kubernetes манифесты на синтаксис и структуру.
 
-- **Recommended (optional):**
-  - **kubeval** — Validate Kubernetes YAML files against the Kubernetes schema.
-  - **kube-score** or **kubesec** — Analyze Kubernetes manifests for security and best practices.
-  - **yamllint** — Lint YAML files for syntax and style.
+- **Рекомендуемые (опционально):**
+  - **kubeval** — Валидировать Kubernetes YAML файлы против Kubernetes схемы.
+  - **kube-score** или **kubesec** — Анализировать Kubernetes манифесты на безопасность и лучшие практики.
+  - **yamllint** — Линт YAML файлов на синтаксис и стиль.
 
-These checks help ensure that the codebase is maintainable, secure, and ready for production deployment. 
+Эти проверки помогают обеспечить, что кодовая база поддерживаема, безопасна и готова к продакшен деплою. 
