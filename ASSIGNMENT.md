@@ -1,89 +1,89 @@
-# Rapyd Sentinel Test Assignment
+# Rapyd Sentinel Тестовое Задание
 
-## Background
-You're joining the team working on an imaginary product called Rapyd Sentinel, our flagship threat intelligence platform.
+## Предыстория
+Вы присоединяетесь к команде, работающей над воображаемым продуктом под названием Rapyd Sentinel, нашей флагманской платформой разведывательной информации об угрозах.
 
-To support better scalability, compliance, and team autonomy, Sentinel’s architecture has recently been split into two isolated domains:
-1. **Gateway Layer (Public)** – hosts internet-facing APIs and proxies
-2. **Backend Layer (Private)** – runs internal processing and sensitive services
+Для поддержки лучшей масштабируемости, соответствия требованиям и автономии команды, архитектура Sentinel недавно была разделена на два изолированных домена:
+1. **Gateway Layer (Публичный)** – размещает интернет-ориентированные API и прокси
+2. **Backend Layer (Приватный)** – запускает внутреннюю обработку и чувствительные сервисы
 
-These two environments:
-- Operate in separate AWS VPCs
-- Each host their own Kubernetes cluster
-- Must communicate privately and securely across networks
+Эти две среды:
+- Работают в отдельных AWS VPC
+- Каждая размещает свой собственный Kubernetes кластер
+- Должны общаться приватно и безопасно через сети
 
-You’ve been tasked with building a proof-of-concept environment that mirrors this architecture — using Terraform, EKS, and GitHub Actions CI/CD and container registry — and demonstrates production-readiness, modularity, and security best practices.
-
----
-
-## Objectives
-You will:
-- Use Terraform to build two isolated VPCs
-- Deploy two EKS clusters (one per VPC)
-- Set up secure private networking between them
-- Deploy a basic app in the backend and a proxy in the gateway
-- Wire everything up with a CI/CD pipeline
-- Document your design, security decisions, and tradeoffs
+Вам поручено построить среду proof-of-concept, которая отражает эту архитектуру — используя Terraform, EKS и GitHub Actions CI/CD и container registry — и демонстрирует готовность к продакшену, модульность и лучшие практики безопасности.
 
 ---
 
-## Requirements
-### Infrastructure (Terraform)
-- Create two AWS VPCs:
-  - **vpc-gateway**: for the proxy and public-facing services
-  - **vpc-backend**: for the internal backend services
-- Each VPC must include:
-  - Two private subnets in different Availability Zones
-  - NAT Gateways (for outbound traffic if needed)
-- No public EC2s or unrestricted access
-- Create VPC Peering (or optionally Transit Gateway) between the VPCs
-- Set up correct routing tables and security groups to allow cross-VPC private communication
-- Deploy one Amazon EKS cluster per VPC:
-  - **eks-gateway** in vpc-gateway
-  - **eks-backend** in vpc-backend
-- Use Terraform modules for reusable, clean structure
-
-### Application Workloads (Kubernetes)
-- In **eks-backend**:
-  - Deploy a simple internal backend service (e.g., a basic web server that responds “Hello from backend”)
-  - Do not expose it to the internet
-- In **eks-gateway**:
-  - Deploy a proxy application (e.g., NGINX reverse proxy or a simple Node.js forwarder)
-  - The proxy exposes a public LoadBalancer
-  - All traffic to the proxy is forwarded to the backend service over the VPC link
-- Configure DNS resolution or hardcoded IPs as needed
-- Validate that the proxy successfully reaches the backend
-- Restrict network access to the backend service using Security Groups, allowing only traffic from the EKS nodes (or CIDR) in the proxy cluster's VPC.
-- Optionally, apply Kubernetes NetworkPolicy to further limit internal pod communication within the backend cluster.
-
-### CI/CD Pipeline (GitHub Actions)
-- Set up a GitHub Actions workflow to:
-  - Validate Terraform (terraform validate, tflint)
-  - Plan and apply Terraform
-  - Validate Kubernetes manifests (kubeval, kubectl apply --dry-run)
-  - Deploy the proxy and backend services
-- Workflow must be triggered on push
-- **Optional Bonus:** Use GitHub OIDC federation to deploy to AWS without long-lived credentials
-
-### Documentation (README.md)
-Include clear instructions and justifications:
-- How to clone and run the project
-- How networking is configured between VPCs & clusters
-- How the proxy talks to the backend
-- NetworkPolicy explanation and security model
-- CI/CD pipeline structure
-- Trade-offs due to the 3-day limit
-- **Optional:** Cost optimization notes (e.g., NAT usage, instance types, load balancer selection)
-- What you would do next (e.g., TLS/mTLS, observability, GitOps, ingress controllers, service mesh, Vault, etc.)
+## Цели
+Вы будете:
+- Использовать Terraform для построения двух изолированных VPC
+- Деплоить два EKS кластера (по одному на VPC)
+- Настраивать безопасную приватную сеть между ними
+- Деплоить базовое приложение в backend и прокси в gateway
+- Связывать все с CI/CD пайплайном
+- Документировать ваш дизайн, решения по безопасности и компромиссы
 
 ---
 
-## Evaluation Criteria
-We’ll be looking for:
-- Infrastructure correctness and security (private subnets, no public EC2s, tight SGs)
-- Terraform quality: modular, readable, maintainable
-- Kubernetes setup and working cross-cluster communication
-- CI/CD automation, linting, and deploy flow
-- Networking clarity and security (VPC peering, SGs, NetworkPolicy)
-- Realism in design trade-offs and next steps
-- Documentation completeness and clarity 
+## Требования
+### Инфраструктура (Terraform)
+- Создать два AWS VPC:
+  - **vpc-gateway**: для прокси и публично-ориентированных сервисов
+  - **vpc-backend**: для внутренних backend сервисов
+- Каждый VPC должен включать:
+  - Два приватных subnet в разных Availability Zones
+  - NAT Gateways (для исходящего трафика при необходимости)
+- Нет публичных EC2 или неограниченного доступа
+- Создать VPC Peering (или опционально Transit Gateway) между VPC
+- Настроить правильные route tables и security groups для разрешения меж-VPC приватной связи
+- Деплоить один Amazon EKS кластер на VPC:
+  - **eks-gateway** в vpc-gateway
+  - **eks-backend** в vpc-backend
+- Использовать Terraform модули для переиспользуемой, чистой структуры
+
+### Рабочие Нагрузки Приложений (Kubernetes)
+- В **eks-backend**:
+  - Деплоить простой внутренний backend сервис (например, базовый веб-сервер, который отвечает "Hello from backend")
+  - Не экспонировать его в интернет
+- В **eks-gateway**:
+  - Деплоить прокси приложение (например, NGINX reverse proxy или простой Node.js forwarder)
+  - Прокси экспонирует публичный LoadBalancer
+  - Весь трафик к прокси перенаправляется к backend сервису через VPC связь
+- Настроить DNS resolution или жестко заданные IP по необходимости
+- Валидировать, что прокси успешно достигает backend
+- Ограничить сетевой доступ к backend сервису используя Security Groups, разрешая только трафик от EKS узлов (или CIDR) в VPC прокси кластера.
+- Опционально, применить Kubernetes NetworkPolicy для дальнейшего ограничения внутренней связи подов в backend кластере.
+
+### CI/CD Пайплайн (GitHub Actions)
+- Настроить GitHub Actions workflow для:
+  - Валидации Terraform (terraform validate, tflint)
+  - Plan и apply Terraform
+  - Валидации Kubernetes манифестов (kubeval, kubectl apply --dry-run)
+  - Деплоя прокси и backend сервисов
+- Workflow должен запускаться по push
+- **Опциональный Бонус:** Использовать GitHub OIDC federation для деплоя в AWS без долгосрочных credentials
+
+### Документация (README.md)
+Включить четкие инструкции и обоснования:
+- Как клонировать и запустить проект
+- Как настроена сеть между VPC и кластерами
+- Как прокси общается с backend
+- Объяснение NetworkPolicy и модели безопасности
+- Структура CI/CD пайплайна
+- Компромиссы из-за 3-дневного лимита
+- **Опционально:** Заметки по оптимизации стоимости (например, использование NAT, типы инстансов, выбор load balancer)
+- Что вы сделали бы дальше (например, TLS/mTLS, observability, GitOps, ingress controllers, service mesh, Vault, и т.д.)
+
+---
+
+## Критерии Оценки
+Мы будем искать:
+- Правильность и безопасность инфраструктуры (приватные subnets, нет публичных EC2, строгие SGs)
+- Качество Terraform: модульность, читаемость, поддерживаемость
+- Настройку Kubernetes и работающую меж-кластерную связь
+- Автоматизацию CI/CD, линтинг и flow деплоя
+- Ясность и безопасность сети (VPC peering, SGs, NetworkPolicy)
+- Реалистичность в дизайн компромиссах и следующих шагах
+- Полноту и ясность документации 

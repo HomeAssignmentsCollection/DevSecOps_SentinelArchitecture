@@ -1,67 +1,67 @@
-# Deployment Guide
+# Руководство по Деплою
 
-This guide provides detailed instructions for deploying the Sentinel DevSecOps infrastructure and applications.
+Это руководство предоставляет детальные инструкции для деплоя инфраструктуры и приложений Sentinel DevSecOps.
 
-## Prerequisites
+## Предварительные Требования
 
-### Required Tools
+### Необходимые Инструменты
 
 1. **AWS CLI v2**
 
    ```bash
-   # Install AWS CLI
+   # Установить AWS CLI
    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
    unzip awscliv2.zip
    sudo ./aws/install
    
-   # Verify installation
+   # Проверить установку
    aws --version
    ```
 
 2. **Terraform >= 1.6.0**
 
    ```bash
-   # Install Terraform
+   # Установить Terraform
    wget https://releases.hashicorp.com/terraform/1.6.0/terraform_1.6.0_linux_amd64.zip
    unzip terraform_1.6.0_linux_amd64.zip
    sudo mv terraform /usr/local/bin/
    
-   # Verify installation
+   # Проверить установку
    terraform --version
    ```
 
 3. **kubectl >= 1.28.0**
 
    ```bash
-   # Install kubectl
+   # Установить kubectl
    curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
    chmod +x kubectl
    sudo mv kubectl /usr/local/bin/
    
-   # Verify installation
+   # Проверить установку
    kubectl version --client
    ```
 
-### AWS Configuration
+### AWS Конфигурация
 
-1. **Configure AWS Credentials**
+1. **Настроить AWS Credentials**
 
    ```bash
    aws configure
-   # Enter your AWS Access Key ID
-   # Enter your AWS Secret Access Key
-   # Enter your default region (us-west-2)
-   # Enter your default output format (json)
+   # Введите ваш AWS Access Key ID
+   # Введите ваш AWS Secret Access Key
+   # Введите ваш default region (us-west-2)
+   # Введите ваш default output format (json)
    ```
 
-2. **Verify AWS Access**
+2. **Проверить AWS Доступ**
 
    ```bash
    aws sts get-caller-identity
    ```
 
-3. **Required AWS Permissions**
-   Your AWS user/role needs the following permissions:
+3. **Необходимые AWS Разрешения**
+   Ваш AWS пользователь/роль нуждается в следующих разрешениях:
    - EC2 (VPC, Security Groups, Subnets)
    - EKS (Clusters, Node Groups)
    - IAM (Roles, Policies)
@@ -69,144 +69,134 @@ This guide provides detailed instructions for deploying the Sentinel DevSecOps i
    - DynamoDB (Tables)
    - CloudWatch (Logs)
 
-## Deployment Steps
+## Шаги Деплоя
 
-### Step 1: Clone Repository
+### Шаг 1: Клонировать Репозиторий
 
 ```bash
 git clone <repository-url>
 cd devsecops-technical-challenge
 ```
 
-### Step 2: Setup Terraform Backend
+### Шаг 2: Настроить Terraform Backend
 
-The first deployment creates the S3 bucket and DynamoDB table for Terraform state management:
+Первый деплой создает S3 bucket и DynamoDB таблицу для управления состоянием Terraform:
 
 ```bash
 chmod +x scripts/setup-backend.sh
 ./scripts/setup-backend.sh
 ```
 
-This script will:
+Этот скрипт:
 
-- Create S3 bucket for Terraform state
-- Create DynamoDB table for state locking
-- Configure Terraform to use the remote backend
-- Migrate local state to S3
+- Создаст S3 bucket для Terraform state
+- Создаст DynamoDB таблицу для блокировки state
+- Настроит Terraform для использования удаленного backend
+- Мигрирует локальный state в S3
 
-### Step 3: Deploy Infrastructure
+### Шаг 3: Деплой Инфраструктуры
 
 ```bash
 chmod +x scripts/deploy.sh
-./scripts/deploy.sh
 ```
 
-This script will:
-
-- Validate Terraform configuration
-- Deploy VPCs and networking
-- Create EKS clusters
-- Deploy applications to Kubernetes
-- Configure load balancers
-- Test connectivity
-
-### Step 4: Verify Deployment
+### Шаг 4: Проверить Деплой
 
 ```bash
 chmod +x scripts/test-connectivity.sh
 ./scripts/test-connectivity.sh
 ```
 
-This script will:
+Этот скрипт:
 
-- Check EKS cluster status
-- Verify application deployments
-- Test cross-VPC connectivity
-- Validate security configurations
-- Provide access URLs
+- Проверит статус EKS кластера
+- Проверит развертывание приложений
+- Проверит меж-VPC связь
+- Проверит конфигурацию безопасности
+- Предоставит URL доступа
 
-## Manual Deployment (Step by Step)
+## Ручное Деплой (Пошагово)
 
-If you prefer to deploy manually or need to troubleshoot:
+Если вы предпочитаете деплой вручную или вам нужно отладить:
 
-### Infrastructure Deployment
+### Инфраструктурное Деплой
 
-1. **Initialize Terraform**
+1. **Инициализировать Terraform**
 
    ```bash
    cd infrastructure
    terraform init
    ```
 
-2. **Plan Deployment**
+2. **Планировать Деплой**
 
    ```bash
    terraform plan -out=tfplan
    ```
 
-3. **Apply Infrastructure**
+3. **Применить Инфраструктуру**
 
    ```bash
    terraform apply tfplan
    ```
 
-4. **Get Outputs**
+4. **Получить Выходы**
 
    ```bash
    terraform output
    ```
 
-### Application Deployment
+### Прикладное Деплой
 
-1. **Configure kubectl for Backend Cluster**
+1. **Настроить kubectl для Backend Cluster**
 
    ```bash
    aws eks update-kubeconfig --region us-west-2 --name sentinel-backend
    ```
 
-2. **Deploy Backend Application**
+2. **Деплой Backend Приложения**
 
    ```bash
    kubectl apply -f k8s-manifests/backend/
    ```
 
-3. **Verify Backend Deployment**
+3. **Проверить Backend Деплой**
 
    ```bash
    kubectl get pods -n backend
    kubectl rollout status deployment/backend-service -n backend
    ```
 
-4. **Configure kubectl for Gateway Cluster**
+4. **Настроить kubectl для Gateway Cluster**
 
    ```bash
    aws eks update-kubeconfig --region us-west-2 --name sentinel-gateway
    ```
 
-5. **Deploy Gateway Application**
+5. **Деплой Gateway Приложения**
 
    ```bash
    kubectl apply -f k8s-manifests/gateway/
    ```
 
-6. **Verify Gateway Deployment**
+6. **Проверить Gateway Деплой**
 
    ```bash
    kubectl get pods -n gateway
    kubectl rollout status deployment/gateway-service -n gateway
    ```
 
-7. **Get Load Balancer URL**
+7. **Получить URL Load Balancer**
 
    ```bash
    kubectl get svc gateway-service -n gateway
    ```
 
-## Configuration Customization
+## Настройка Пользовательских Параметров
 
-### Environment Variables
+### Переменные Окружения
 
-You can customize the deployment by setting environment variables:
+Вы можете настроить деплой, установив переменные окружения:
 
 ```bash
 export AWS_REGION="us-east-1"
@@ -215,9 +205,9 @@ export GATEWAY_VPC_CIDR="172.16.0.0/16"
 export BACKEND_VPC_CIDR="172.17.0.0/16"
 ```
 
-### Terraform Variables
+### Terraform Переменные
 
-Edit `infrastructure/terraform.tfvars` to customize:
+Редактируйте `infrastructure/terraform.tfvars` для настройки:
 
 ```hcl
 # AWS Configuration
@@ -239,80 +229,80 @@ node_instance_types = ["t3.large"]
 single_nat_gateway = false  # Use multiple NAT gateways for HA
 ```
 
-## Troubleshooting
+## Устранение Неисправностей
 
-### Common Issues
+### Общие Проблемы
 
-1. **Terraform Backend Initialization Fails**
+1. **Инициализация Terraform Backend Не удалась**
 
    ```bash
-   # Check AWS credentials
+   # Проверить AWS Credentials
    aws sts get-caller-identity
    
-   # Check S3 bucket permissions
+   # Проверить разрешения S3 bucket
    aws s3 ls s3://your-bucket-name
    ```
 
-2. **EKS Cluster Creation Timeout**
+2. **Создание EKS Кластера Таймаут**
 
    ```bash
-   # Check AWS service limits
+   # Проверить лимиты AWS сервисов
    aws service-quotas get-service-quota --service-code eks --quota-code L-1194D53C
    
-   # Check IAM permissions
+   # Проверить разрешения IAM
    aws iam get-role --role-name sentinel-gateway-cluster-role
    ```
 
-3. **LoadBalancer Not Getting External IP**
+3. **LoadBalancer Не получает внешний IP**
 
    ```bash
-   # Check security groups
+   # Проверить security groups
    kubectl describe svc gateway-service -n gateway
    
-   # Check subnet tags
+   # Проверить теги подсетей
    aws ec2 describe-subnets --filters "Name=tag:kubernetes.io/role/elb,Values=1"
    ```
 
-4. **Cross-VPC Communication Fails**
+4. **Меж-VPC Связь Не работает**
 
    ```bash
-   # Check VPC peering status
+   # Проверить статус VPC Peering
    aws ec2 describe-vpc-peering-connections
    
-   # Check route tables
+   # Проверить таблицы маршрутов
    aws ec2 describe-route-tables
    
-   # Test DNS resolution
+   # Проверить разрешение DNS
    kubectl exec -it test-pod -- nslookup backend-service.backend.svc.cluster.local
    ```
 
-### Debugging Commands
+### Команды Отладки
 
 ```bash
-# Check EKS cluster status
+# Проверить статус EKS кластера
 aws eks describe-cluster --name sentinel-gateway
 
-# Check node group status
+# Проверить статус node group
 aws eks describe-nodegroup --cluster-name sentinel-gateway --nodegroup-name sentinel-gateway-nodes
 
-# Check pod logs
+# Проверить логи pod
 kubectl logs -f deployment/gateway-service -n gateway
 
-# Check service endpoints
+# Проверить конечные точки сервиса
 kubectl get endpoints -n gateway
 
-# Check network policies
+# Проверить политики сети
 kubectl describe networkpolicy -n backend
 
-# Check security groups
+# Проверить security groups
 aws ec2 describe-security-groups --group-names sentinel-gateway-eks
 ```
 
-## Monitoring Deployment
+## Мониторинг Деплоя
 
-### CloudWatch Logs
+### CloudWatch Логи
 
-Monitor EKS control plane logs:
+Мониторинг логов EKS контрольной панели:
 
 ```bash
 aws logs describe-log-groups --log-group-name-prefix /aws/eks/sentinel
@@ -321,115 +311,115 @@ aws logs describe-log-groups --log-group-name-prefix /aws/eks/sentinel
 ### EKS Cluster Health
 
 ```bash
-# Check cluster status
+# Проверить статус кластера
 kubectl get nodes
 kubectl get pods --all-namespaces
 
-# Check cluster info
+# Проверить информацию кластера
 kubectl cluster-info
 kubectl get componentstatuses
 ```
 
-### Application Health
+### Прикладное Здоровье
 
 ```bash
-# Check application status
+# Проверить статус приложения
 kubectl get deployments --all-namespaces
 kubectl get services --all-namespaces
 
-# Test application endpoints
+# Проверить конечные точки приложения
 curl -f http://<alb-dns>/health
 curl -f http://<alb-dns>/api/
 ```
 
-## Scaling Considerations
+## Учетные Записи Масштабирования
 
-### Horizontal Scaling
+### Горизонтальное Масштабирование
 
 ```bash
-# Scale application pods
+# Масштабировать pod приложения
 kubectl scale deployment gateway-service --replicas=5 -n gateway
 kubectl scale deployment backend-service --replicas=3 -n backend
 
-# Configure Horizontal Pod Autoscaler
+# Настроить Horizontal Pod Autoscaler
 kubectl autoscale deployment gateway-service --cpu-percent=70 --min=2 --max=10 -n gateway
 ```
 
 ### Cluster Scaling
 
 ```bash
-# Update node group capacity
+# Обновить конфигурацию node group
 aws eks update-nodegroup-config \
   --cluster-name sentinel-gateway \
   --nodegroup-name sentinel-gateway-nodes \
   --scaling-config minSize=2,maxSize=5,desiredSize=3
 ```
 
-## Security Validation
+## Безопасность Проверка
 
-### Network Security Testing
+### Тестирование Сетевой Безопасности
 
 ```bash
-# Test backend isolation (should fail)
+# Тестировать изоляцию backend (должно не работать)
 curl -m 5 http://backend-pod-ip:80
 
-# Test gateway accessibility (should succeed)
+# Тестировать доступность gateway (должно работать)
 curl -f http://<alb-dns>/health
 
-# Test cross-VPC communication (should succeed)
+# Тестировать меж-VPC связь (должно работать)
 curl -f http://<alb-dns>/api/
 ```
 
-### RBAC Testing
+### RBAC Тестирование
 
 ```bash
-# Test service account permissions
+# Тестировать разрешения учетной записи сервиса
 kubectl auth can-i create pods --as=system:serviceaccount:backend:default
 
-# Test network policy enforcement
+# Тестировать соблюдение политик сети
 kubectl exec -it test-pod -n gateway -- nc -zv backend-service.backend.svc.cluster.local 80
 ```
 
-## Performance Testing
+## Тестирование Производительности
 
-### Load Testing
+### Нагрузочное Тестирование
 
 ```bash
-# Install Apache Bench
+# Установить Apache Bench
 sudo apt-get install apache2-utils
 
-# Test gateway performance
+# Тестировать производительность gateway
 ab -n 1000 -c 10 http://<alb-dns>/health
 
-# Test backend connectivity
+# Тестировать подключение backend
 ab -n 500 -c 5 http://<alb-dns>/api/
 ```
 
-### Resource Monitoring
+### Мониторинг Ресурсов
 
 ```bash
-# Monitor resource usage
+# Мониторить использование ресурсов
 kubectl top nodes
 kubectl top pods --all-namespaces
 
-# Check resource limits
+# Проверить лимиты ресурсов
 kubectl describe pod <pod-name> -n <namespace>
 ```
 
-## Cleanup
+## Очистка
 
-To destroy all resources:
+Чтобы уничтожить все ресурсы:
 
 ```bash
 chmod +x scripts/cleanup.sh
 ./scripts/cleanup.sh
 ```
 
-This will:
+Это:
 
-- Delete Kubernetes applications
-- Destroy Terraform infrastructure
-- Clean up local kubectl contexts
-- Remove temporary files
+- Удалит Kubernetes приложения
+- Уничтожит Terraform инфраструктуру
+- Очистит локальные контексты kubectl
+- Удалит временные файлы
 
-**Warning**: This action cannot be undone. Make sure you have backups of any important data.
+**Предупреждение**: Это действие нельзя отменить. Убедитесь, что у вас есть резервные копии важных данных.

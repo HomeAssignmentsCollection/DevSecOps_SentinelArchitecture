@@ -1,26 +1,26 @@
-# Sentinel Architecture Deep Dive
+# Детальный Обзор Архитектуры Sentinel
 
-## Overview
+## Обзор
 
-The Sentinel split architecture implements a secure, scalable microservices platform using AWS EKS with two isolated VPCs connected via VPC peering. This design follows AWS Well-Architected Framework principles and enterprise security best practices.
+Разделенная архитектура Sentinel реализует безопасную, масштабируемую микросервисную платформу используя AWS EKS с двумя изолированными VPC, соединенными через VPC peering. Этот дизайн следует принципам AWS Well-Architected Framework и лучшим практикам корпоративной безопасности.
 
-## Network Architecture
+## Сетевая Архитектура
 
-### VPC Design
+### Дизайн VPC
 
 #### Gateway VPC (10.0.0.0/16)
-- **Purpose**: Internet-facing services, API gateways, load balancers
-- **Public Subnets**: 10.0.1.0/24, 10.0.2.0/24 (NAT Gateways only)
-- **Private Subnets**: 10.0.11.0/24, 10.0.12.0/24 (EKS nodes)
-- **Internet Gateway**: Attached for outbound internet access
-- **NAT Gateway**: Single gateway for cost optimization
+- **Назначение**: Интернет-ориентированные сервисы, API gateways, load balancers
+- **Публичные Subnets**: 10.0.1.0/24, 10.0.2.0/24 (только NAT Gateways)
+- **Приватные Subnets**: 10.0.11.0/24, 10.0.12.0/24 (EKS узлы)
+- **Internet Gateway**: Прикреплен для исходящего доступа в интернет
+- **NAT Gateway**: Один gateway для оптимизации стоимости
 
 #### Backend VPC (10.1.0.0/16)
-- **Purpose**: Internal services, databases, sensitive processing
-- **Public Subnets**: 10.1.1.0/24, 10.1.2.0/24 (NAT Gateways only)
-- **Private Subnets**: 10.1.11.0/24, 10.1.12.0/24 (EKS nodes)
-- **Internet Gateway**: Attached for outbound internet access
-- **NAT Gateway**: Single gateway for cost optimization
+- **Назначение**: Внутренние сервисы, базы данных, чувствительная обработка
+- **Публичные Subnets**: 10.1.1.0/24, 10.1.2.0/24 (только NAT Gateways)
+- **Приватные Subnets**: 10.1.11.0/24, 10.1.12.0/24 (EKS узлы)
+- **Internet Gateway**: Прикреплен для исходящего доступа в интернет
+- **NAT Gateway**: Один gateway для оптимизации стоимости
 
 ### VPC Peering
 
@@ -28,55 +28,55 @@ The Sentinel split architecture implements a secure, scalable microservices plat
 Gateway VPC (10.0.0.0/16) ←→ Backend VPC (10.1.0.0/16)
 ```
 
-- **Bidirectional routing**: Both VPCs can communicate privately
-- **DNS resolution**: Cross-VPC DNS resolution enabled
-- **Security**: Traffic filtered by security groups and NACLs
+- **Двунаправленная маршрутизация**: Оба VPC могут общаться приватно
+- **DNS resolution**: Включено меж-VPC DNS разрешение
+- **Безопасность**: Трафик фильтруется security groups и NACLs
 
-## EKS Cluster Architecture
+## Архитектура EKS Кластеров
 
-### Gateway Cluster
-- **Name**: sentinel-gateway
-- **Version**: Kubernetes 1.28+
-- **Node Groups**: Managed node groups in private subnets
-- **Instance Types**: t3.medium (cost-optimized)
-- **Scaling**: 1-3 nodes with auto-scaling
-- **Networking**: AWS VPC CNI with pod networking
+### Gateway Кластер
+- **Имя**: sentinel-gateway
+- **Версия**: Kubernetes 1.28+
+- **Node Groups**: Управляемые группы узлов в приватных subnets
+- **Типы Инстансов**: t3.medium (оптимизировано по стоимости)
+- **Масштабирование**: 1-3 узла с авто-масштабированием
+- **Сеть**: AWS VPC CNI с pod networking
 
-### Backend Cluster
-- **Name**: sentinel-backend
-- **Version**: Kubernetes 1.28+
-- **Node Groups**: Managed node groups in private subnets
-- **Instance Types**: t3.medium (cost-optimized)
-- **Scaling**: 1-3 nodes with auto-scaling
-- **Networking**: AWS VPC CNI with pod networking
+### Backend Кластер
+- **Имя**: sentinel-backend
+- **Версия**: Kubernetes 1.28+
+- **Node Groups**: Управляемые группы узлов в приватных subnets
+- **Типы Инстансов**: t3.medium (оптимизировано по стоимости)
+- **Масштабирование**: 1-3 узла с авто-масштабированием
+- **Сеть**: AWS VPC CNI с pod networking
 
-## Security Architecture
+## Архитектура Безопасности
 
-### Defense in Depth
+### Защита в Глубину
 
 ```
-Internet → ALB → Security Groups → NACLs → Network Policies → Pod Security
+Интернет → ALB → Security Groups → NACLs → Network Policies → Pod Security
 ```
 
-#### Layer 1: AWS Security Groups
-- **Gateway EKS**: Allow HTTP/HTTPS from internet, all from backend VPC
-- **Backend EKS**: Allow traffic only from gateway VPC
-- **ALB**: Allow HTTP/HTTPS from internet
+#### Слой 1: AWS Security Groups
+- **Gateway EKS**: Разрешить HTTP/HTTPS из интернета, все из backend VPC
+- **Backend EKS**: Разрешить трафик только из gateway VPC
+- **ALB**: Разрешить HTTP/HTTPS из интернета
 
-#### Layer 2: Network ACLs
-- **Private Subnets**: Allow traffic within VPC CIDR blocks
-- **Public Subnets**: Allow internet traffic for NAT gateways
+#### Слой 2: Network ACLs
+- **Приватные Subnets**: Разрешить трафик внутри VPC CIDR блоков
+- **Публичные Subnets**: Разрешить интернет трафик для NAT gateways
 
-#### Layer 3: Kubernetes Network Policies
-- **Backend Namespace**: Deny all ingress except from gateway
-- **Gateway Namespace**: Allow internet ingress, backend egress
+#### Слой 3: Kubernetes Network Policies
+- **Backend Namespace**: Запретить весь ingress кроме gateway
+- **Gateway Namespace**: Разрешить internet ingress, backend egress
 
-#### Layer 4: Pod Security
-- **Security Contexts**: Non-root users, read-only filesystems
-- **Resource Limits**: CPU and memory constraints
-- **Health Checks**: Liveness and readiness probes
+#### Слой 4: Pod Security
+- **Security Contexts**: Не-root пользователи, read-only файловые системы
+- **Resource Limits**: CPU и memory ограничения
+- **Health Checks**: Liveness и readiness пробы
 
-### IAM Security Model
+### IAM Модель Безопасности
 
 #### EKS Cluster Roles
 ```json
@@ -95,20 +95,20 @@ Internet → ALB → Security Groups → NACLs → Network Policies → Pod Secu
 ```
 
 #### Node Group Roles
-- **AmazonEKSWorkerNodePolicy**: Basic EKS worker permissions
+- **AmazonEKSWorkerNodePolicy**: Базовые EKS worker разрешения
 - **AmazonEKS_CNI_Policy**: VPC CNI networking
 - **AmazonEC2ContainerRegistryReadOnly**: ECR image pulls
 
-## Application Architecture
+## Архитектура Приложений
 
 ### Gateway Service
 
-#### Components
-- **Nginx Reverse Proxy**: Routes traffic to backend services
-- **Load Balancer**: AWS ALB with health checks
-- **Service Discovery**: Kubernetes DNS resolution
+#### Компоненты
+- **Nginx Reverse Proxy**: Маршрутизирует трафик к backend сервисам
+- **Load Balancer**: AWS ALB с health checks
+- **Service Discovery**: Kubernetes DNS разрешение
 
-#### Configuration
+#### Конфигурация
 ```nginx
 upstream backend {
     server backend-service.backend.svc.cluster.local:80;
@@ -126,26 +126,26 @@ server {
 
 ### Backend Service
 
-#### Components
-- **Nginx Web Server**: Serves static content and APIs
-- **ClusterIP Service**: Internal-only service exposure
-- **ConfigMap**: Application configuration
+#### Компоненты
+- **Nginx Web Server**: Сервирует статическое содержимое и API
+- **ClusterIP Service**: Экспозиция внутреннего сервиса
+- **ConfigMap**: Конфигурация приложения
 
-#### Security Features
-- **No External Access**: ClusterIP service type
-- **Network Policies**: Ingress restrictions
-- **Resource Limits**: CPU and memory constraints
+#### Безопасность
+- **Отсутствие внешнего доступа**: Тип сервиса ClusterIP
+- **Network Policies**: Ограничения ingress
+- **Resource Limits**: CPU и memory ограничения
 
-## Data Flow
+## Поток Данных
 
-### Request Processing
+### Обработка Запросов
 
-1. **Internet Request** → ALB (Gateway VPC)
-2. **ALB** → Gateway Pod (Private Subnet)
+1. **Интернет Запрос** → ALB (Gateway VPC)
+2. **ALB** → Gateway Pod (Приватный Subnet)
 3. **Gateway Pod** → DNS Resolution → Backend Service
 4. **VPC Peering** → Backend VPC
-5. **Backend Pod** → Process Request
-6. **Response Path**: Reverse of above
+5. **Backend Pod** → Обработка Запроса
+6. **Путь Ответа**: Обратный порядку выше
 
 ### Service Discovery
 
@@ -158,98 +158,98 @@ backend-service.backend.svc.cluster.local
 └── Resolution: 10.1.x.x (Backend VPC IP)
 ```
 
-## Monitoring and Observability
+## Мониторинг и Обеспечение Безопасности
 
-### Metrics Collection
+### Сбор Метрик
 - **EKS Control Plane Logs**: API server, audit, authenticator
 - **Node Metrics**: CPU, memory, disk, network
 - **Pod Metrics**: Resource usage, restart counts
 - **Application Metrics**: Custom business metrics
 
-### Logging Strategy
-- **Container Logs**: stdout/stderr to CloudWatch
+### Стратегия Логирования
+- **Container Logs**: stdout/stderr в CloudWatch
 - **Audit Logs**: EKS API server audit logs
-- **VPC Flow Logs**: Network traffic analysis
-- **ALB Access Logs**: Request patterns and errors
+- **VPC Flow Logs**: Анализ сетевого трафика
+- **ALB Access Logs**: Patterns запросов и ошибки
 
-### Health Monitoring
-- **Liveness Probes**: Container health checks
-- **Readiness Probes**: Service availability
-- **ALB Health Checks**: Target group monitoring
-- **EKS Cluster Health**: Control plane status
+### Мониторинг Здоровья
+- **Liveness Probes**: Проверки здоровья контейнеров
+- **Readiness Probes**: Доступность сервиса
+- **ALB Health Checks**: Мониторинг target groups
+- **EKS Cluster Health**: Статус control plane
 
-## Disaster Recovery
+## Восстановление После Отказа
 
-### Backup Strategy
-- **EKS Cluster**: ETCD snapshots (managed by AWS)
-- **Application Data**: Persistent volume snapshots
-- **Configuration**: GitOps repository backup
-- **Terraform State**: S3 versioning and cross-region replication
+### Стратегия Резервного Копирования
+- **EKS Cluster**: Snapshots ETCD (управляется AWS)
+- **Application Data**: Snapshots постоянных объемов
+- **Configuration**: Резервное копирование репозитория GitOps
+- **Terraform State**: S3 versioning и cross-region репликация
 
-### Recovery Procedures
-1. **Infrastructure**: Terraform apply from backup state
-2. **Applications**: GitOps deployment from repository
-3. **Data**: Restore from EBS snapshots
-4. **Validation**: Automated testing pipeline
+### Процедуры Восстановления
+1. **Infrastructure**: Terraform apply из состояния резервной копии
+2. **Applications**: GitOps deployment из репозитория
+3. **Data**: Восстановление из EBS snapshots
+4. **Validation**: Автоматизированная конвейер тестирования
 
-## Performance Optimization
+## Оптимизация Производительности
 
-### Scaling Strategies
-- **Horizontal Pod Autoscaler**: Scale pods based on CPU/memory
-- **Vertical Pod Autoscaler**: Right-size resource requests
-- **Cluster Autoscaler**: Add/remove nodes automatically
-- **Load Balancer**: Distribute traffic across healthy targets
+### Стратегии Масштабирования
+- **Horizontal Pod Autoscaler**: Масштабирование по CPU/memory
+- **Vertical Pod Autoscaler**: Правильный размер ресурсов
+- **Cluster Autoscaler**: Добавление/удаление узлов автоматически
+- **Load Balancer**: Распределение трафика между здоровыми целями
 
-### Resource Management
-- **Resource Requests**: Guaranteed CPU and memory
-- **Resource Limits**: Maximum CPU and memory usage
-- **Quality of Service**: Guaranteed, Burstable, BestEffort
-- **Node Affinity**: Optimize pod placement
+### Управление Ресурсами
+- **Resource Requests**: Гарантированный CPU и memory
+- **Resource Limits**: Максимальный CPU и memory использование
+- **Quality of Service**: Гарантированный, Burstable, BestEffort
+- **Node Affinity**: Оптимизация размещения pod
 
-## Cost Optimization
+## Оптимизация Стоимости
 
-### Current Optimizations
-- **Single NAT Gateway**: Reduce NAT costs by 50%
-- **t3.medium Instances**: Cost-effective for development
-- **Managed Node Groups**: Reduce operational overhead
-- **Auto Scaling**: Scale down during off-hours
+### Текущие Оптимизации
+- **Единый NAT Gateway**: Уменьшение затрат на NAT на 50%
+- **t3.medium Instances**: Экономично для разработки
+- **Managed Node Groups**: Уменьшение операционных накладных расходов
+- **Auto Scaling**: Масштабирование в ночное время
 
-### Future Optimizations
-- **Spot Instances**: 60-90% cost reduction for non-critical workloads
-- **Reserved Instances**: 30-40% savings with 1-year commitment
-- **Fargate**: Serverless containers for variable workloads
-- **Graviton Instances**: ARM-based instances for better price/performance
+### Будущие Оптимизации
+- **Spot Instances**: 60-90% снижение стоимости для некритичных нагрузок
+- **Reserved Instances**: 30-40% экономии с 1-летним обязательством
+- **Fargate**: Serverless контейнеры для переменных нагрузок
+- **Graviton Instances**: ARM-based инстансы для лучшего соотношения цена/производительность
 
-## Compliance and Governance
+## Соответствие Требованиям и Управление
 
-### Security Standards
-- **SOC 2 Type II**: Security controls and monitoring
-- **ISO 27001**: Information security management
-- **PCI DSS**: Payment card industry compliance
-- **GDPR**: Data protection and privacy
+### Стандарты Безопасности
+- **SOC 2 Type II**: Контроли безопасности и мониторинг
+- **ISO 27001**: Управление информационной безопасностью
+- **PCI DSS**: Соответствие отраслевым стандартам платежных карт
+- **GDPR**: Защита данных и конфиденциальность
 
-### Policy Enforcement
+### Законное Принуждение
 - **Open Policy Agent**: Kubernetes admission control
-- **AWS Config**: Resource compliance monitoring
-- **Service Control Policies**: AWS account governance
-- **Terraform Sentinel**: Infrastructure policy as code
+- **AWS Config**: Мониторинг соответствия ресурсов
+- **Service Control Policies**: Управление учетными записями AWS
+- **Terraform Sentinel**: Инфраструктурная политика как код
 
-## Future Enhancements
+## Будущие Улучшения
 
-### Service Mesh Integration
-- **Istio**: Advanced traffic management and security
-- **AWS App Mesh**: Managed service mesh
-- **mTLS**: Mutual TLS between services
-- **Circuit Breaking**: Fault tolerance patterns
+### Интеграция Service Mesh
+- **Istio**: Расширенное управление трафиком и безопасность
+- **AWS App Mesh**: Управляемый сервисный mesh
+- **mTLS**: Mutual TLS между сервисами
+- **Circuit Breaking**: Паттерны отказоустойчивости
 
-### GitOps Implementation
-- **ArgoCD**: Declarative GitOps for Kubernetes
-- **Flux**: GitOps toolkit for Kubernetes
-- **Helm**: Package management for Kubernetes
-- **Kustomize**: Configuration management
+### Реализация GitOps
+- **ArgoCD**: Декларативное GitOps для Kubernetes
+- **Flux**: GitOps toolkit для Kubernetes
+- **Helm**: Управление пакетами для Kubernetes
+- **Kustomize**: Управление конфигурацией
 
-### Multi-Region Deployment
-- **Cross-Region Replication**: Data and configuration sync
-- **Global Load Balancer**: Route 53 health checks
-- **Disaster Recovery**: Automated failover procedures
-- **Data Sovereignty**: Regional data compliance
+### Мульти-региональное Развертывание
+- **Cross-Region Replication**: Синхронизация данных и конфигурации
+- **Global Load Balancer**: Health checks Route 53
+- **Disaster Recovery**: Автоматизированные процедуры отработки отказа
+- **Data Sovereignty**: Региональная соответствие данных
